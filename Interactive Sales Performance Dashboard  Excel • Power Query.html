@@ -1,0 +1,373 @@
+
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:var(--font-sans,'Arial',sans-serif);background:#fff;color:#111}
+.db{padding:1.25rem;max-width:100%}
+.top-bar{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:1.25rem;padding-bottom:1rem;border-bottom:1px solid #e8e8e8}
+.title{font-size:17px;font-weight:500;color:#111;letter-spacing:-.01em}
+.subtitle{font-size:12px;color:#999;margin-top:3px}
+.filter-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:8px;margin-bottom:1.25rem;padding:1rem;background:#fafafa;border-radius:8px;border:1px solid #efefef}
+.filter-group label{display:block;font-size:10px;font-weight:500;color:#aaa;margin-bottom:4px;text-transform:uppercase;letter-spacing:.07em}
+.filter-group select{width:100%;font-size:12px;background:#fff;color:#111;border:1px solid #e0e0e0;border-radius:6px;padding:6px 8px;cursor:pointer;outline:none}
+.filter-group select:focus{border-color:#1a6ef7}
+.reset-btn{font-size:11px;color:#1a6ef7;background:#fff;border:1px solid #d0dff9;border-radius:6px;padding:6px 12px;cursor:pointer;white-space:nowrap;align-self:flex-end}
+.reset-btn:hover{background:#f0f5ff}
+.kpi-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:8px;margin-bottom:1.25rem}
+.kpi{background:#fafafa;border:1px solid #efefef;border-radius:8px;padding:.9rem 1rem}
+.kpi-label{font-size:10px;color:#aaa;font-weight:500;margin-bottom:5px;text-transform:uppercase;letter-spacing:.07em}
+.kpi-val{font-size:20px;font-weight:500;color:#111;line-height:1.1}
+.kpi-val.blue{color:#1a6ef7}
+.kpi-sub{font-size:11px;color:#bbb;margin-top:4px}
+.charts-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px}
+.chart-card{background:#fff;border:1px solid #efefef;border-radius:8px;padding:1rem}
+.chart-card.full{grid-column:1/-1}
+.chart-title{font-size:11px;font-weight:500;color:#999;margin-bottom:.75rem;text-transform:uppercase;letter-spacing:.06em}
+.chart-wrap{position:relative;width:100%}
+.legend{display:flex;flex-wrap:wrap;gap:12px;margin-bottom:8px;font-size:11px;color:#999}
+.legend-item{display:flex;align-items:center;gap:5px}
+.legend-dot{width:8px;height:8px;border-radius:2px;flex-shrink:0}
+.table-wrap{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:12px}
+th{text-align:left;padding:7px 10px;font-size:10px;font-weight:500;color:#aaa;border-bottom:1px solid #efefef;text-transform:uppercase;letter-spacing:.06em}
+td{padding:7px 10px;color:#333;border-bottom:1px solid #f5f5f5}
+tr:last-child td{border-bottom:none}
+tr:hover td{background:#fafafa}
+.badge{display:inline-block;font-size:10px;padding:2px 7px;border-radius:4px;font-weight:500}
+.badge-s{background:#e8f0fe;color:#1a6ef7}
+.badge-r{background:#f0f0f0;color:#666}
+.empty{text-align:center;padding:2rem;color:#bbb;font-size:13px}
+.divider{height:1px;background:#efefef;margin:0 0 10px}
+@media(max-width:600px){.charts-grid{grid-template-columns:1fr}.kpi-val{font-size:17px}}
+</style>
+
+<h2 style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0)">Interactive Sales Performance Dashboard</h2>
+
+<div class="db">
+  <div class="top-bar">
+    <div>
+      <div class="title">Sales Performance</div>
+      <div class="subtitle">Jan – Jun 2026 &nbsp;·&nbsp; <span id="rec-count">90</span> records</div>
+    </div>
+  </div>
+
+  <div class="filter-row">
+    <div class="filter-group">
+      <label>Month</label>
+      <select id="f-month" onchange="applyFilters()">
+        <option value="">All months</option>
+        <option>Jan 2026</option><option>Feb 2026</option><option>Mar 2026</option>
+        <option>Apr 2026</option><option>May 2026</option><option>Jun 2026</option>
+      </select>
+    </div>
+    <div class="filter-group">
+      <label>Category</label>
+      <select id="f-cat" onchange="applyFilters()">
+        <option value="">All categories</option>
+        <option>Electronics</option><option>Clothing</option>
+        <option>Home Decor</option><option>Groceries</option>
+      </select>
+    </div>
+    <div class="filter-group">
+      <label>Department</label>
+      <select id="f-dept" onchange="applyFilters()">
+        <option value="">All departments</option>
+        <option>Sales</option><option>Retail</option>
+      </select>
+    </div>
+    <div class="filter-group">
+      <label>Salesperson</label>
+      <select id="f-sp" onchange="applyFilters()"><option value="">All salespeople</option></select>
+    </div>
+    <div class="filter-group" style="display:flex;align-items:flex-end">
+      <button class="reset-btn" onclick="resetFilters()">↺ Reset</button>
+    </div>
+  </div>
+
+  <div class="kpi-row">
+    <div class="kpi"><div class="kpi-label">Total Revenue</div><div class="kpi-val blue" id="kpi-rev">—</div><div class="kpi-sub" id="kpi-rev-s"></div></div>
+    <div class="kpi"><div class="kpi-label">Total Profit</div><div class="kpi-val" id="kpi-profit">—</div><div class="kpi-sub" id="kpi-pm"></div></div>
+    <div class="kpi"><div class="kpi-label">Total Expenses</div><div class="kpi-val" id="kpi-exp">—</div><div class="kpi-sub" id="kpi-exp-s"></div></div>
+    <div class="kpi"><div class="kpi-label">Units Sold</div><div class="kpi-val" id="kpi-units">—</div><div class="kpi-sub" id="kpi-units-s"></div></div>
+    <div class="kpi"><div class="kpi-label">Transactions</div><div class="kpi-val" id="kpi-tx">—</div><div class="kpi-sub" id="kpi-tx-s"></div></div>
+  </div>
+
+  <div class="charts-grid">
+    <div class="chart-card">
+      <div class="chart-title">Monthly revenue vs expenses</div>
+      <div class="legend">
+        <span class="legend-item"><span class="legend-dot" style="background:#1a6ef7"></span>Revenue</span>
+        <span class="legend-item"><span class="legend-dot" style="background:#d0d0d0"></span>Expenses</span>
+        <span class="legend-item"><span class="legend-dot" style="background:#111"></span>Profit</span>
+      </div>
+      <div class="chart-wrap" style="height:210px"><canvas id="c-monthly" role="img" aria-label="Monthly revenue expenses and profit bar chart"></canvas></div>
+    </div>
+    <div class="chart-card">
+      <div class="chart-title">Revenue by category</div>
+      <div class="legend" id="leg-cat"></div>
+      <div class="chart-wrap" style="height:210px"><canvas id="c-cat" role="img" aria-label="Revenue by product category donut chart"></canvas></div>
+    </div>
+    <div class="chart-card">
+      <div class="chart-title">Top salespeople by revenue</div>
+      <div class="chart-wrap"><canvas id="c-sp" role="img" aria-label="Salespeople ranked by revenue"></canvas></div>
+    </div>
+    <div class="chart-card">
+      <div class="chart-title">Profit margin by category (%)</div>
+      <div class="chart-wrap" style="height:210px"><canvas id="c-margin" role="img" aria-label="Profit margin by category"></canvas></div>
+    </div>
+  </div>
+
+  <div class="chart-card full" style="margin-bottom:10px">
+    <div class="chart-title">Department split — revenue by month</div>
+    <div class="legend">
+      <span class="legend-item"><span class="legend-dot" style="background:#1a6ef7"></span>Sales</span>
+      <span class="legend-item"><span class="legend-dot" style="background:#c0cfe8"></span>Retail</span>
+    </div>
+    <div class="chart-wrap" style="height:190px"><canvas id="c-dept" role="img" aria-label="Revenue split by department per month"></canvas></div>
+  </div>
+
+  <div class="chart-card full">
+    <div class="chart-title">Transaction detail</div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr>
+          <th>Month</th><th>Salesperson</th><th>Dept</th><th>Category</th><th>Product</th>
+          <th style="text-align:right">Units</th><th style="text-align:right">Revenue (₹)</th>
+          <th style="text-align:right">Profit (₹)</th><th style="text-align:right">Margin</th>
+        </tr></thead>
+        <tbody id="tbl-body"></tbody>
+      </table>
+      <div id="tbl-empty" class="empty" style="display:none">No records match the selected filters.</div>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<script>
+const RAW=[
+{m:'Jan 2026',sp:'Sanjay Tiwari',dept:'Sales',cat:'Electronics',prod:'Mobile Phone',units:16,sales:296000,exp:39308},
+{m:'Jan 2026',sp:'Shweta Singh',dept:'Retail',cat:'Electronics',prod:'Headphones',units:30,sales:126000,exp:26133},
+{m:'Jan 2026',sp:'Neha Verma',dept:'Retail',cat:'Home Decor',prod:'Curtains',units:62,sales:123938,exp:23349},
+{m:'Jan 2026',sp:'Rahul Gupta',dept:'Sales',cat:'Electronics',prod:'Laptop',units:59,sales:3068000,exp:463383},
+{m:'Jan 2026',sp:'Ravi Shankar',dept:'Sales',cat:'Clothing',prod:'Jeans',units:48,sales:67152,exp:7745},
+{m:'Jan 2026',sp:'Deepak Mishra',dept:'Sales',cat:'Home Decor',prod:'Bedsheet Set',units:50,sales:69950,exp:15887},
+{m:'Jan 2026',sp:'Kavita Joshi',dept:'Retail',cat:'Groceries',prod:'Rice 5kg',units:63,sales:23940,exp:4320},
+{m:'Jan 2026',sp:'Amit Singh',dept:'Retail',cat:'Home Decor',prod:'Bedsheet Set',units:75,sales:104925,exp:15107},
+{m:'Jan 2026',sp:'Pooja Yadav',dept:'Retail',cat:'Groceries',prod:'Flour 10kg',units:29,sales:13340,exp:2744},
+{m:'Jan 2026',sp:'Sunita Patel',dept:'Retail',cat:'Electronics',prod:'Laptop',units:42,sales:2184000,exp:541159},
+{m:'Jan 2026',sp:'Vijay Mehta',dept:'Sales',cat:'Clothing',prod:'T-Shirt',units:53,sales:26447,exp:3747},
+{m:'Jan 2026',sp:'Anita Roy',dept:'Retail',cat:'Groceries',prod:'Dal 2kg',units:52,sales:16120,exp:2471},
+{m:'Jan 2026',sp:'Rajesh Kumar',dept:'Sales',cat:'Groceries',prod:'Rice 5kg',units:26,sales:9880,exp:1780},
+{m:'Jan 2026',sp:'Priya Sharma',dept:'Sales',cat:'Clothing',prod:'Jeans',units:64,sales:89536,exp:14050},
+{m:'Jan 2026',sp:'Manoj Kumar',dept:'Sales',cat:'Clothing',prod:'Saree',units:12,sales:33588,exp:4513},
+{m:'Feb 2026',sp:'Manoj Kumar',dept:'Sales',cat:'Clothing',prod:'Saree',units:22,sales:61578,exp:8436},
+{m:'Feb 2026',sp:'Anita Roy',dept:'Retail',cat:'Groceries',prod:'Flour 10kg',units:59,sales:27140,exp:6369},
+{m:'Feb 2026',sp:'Neha Verma',dept:'Retail',cat:'Home Decor',prod:'Wall Clock',units:33,sales:24750,exp:6178},
+{m:'Feb 2026',sp:'Vijay Mehta',dept:'Sales',cat:'Clothing',prod:'Jacket',units:68,sales:224332,exp:25492},
+{m:'Feb 2026',sp:'Pooja Yadav',dept:'Retail',cat:'Electronics',prod:'Mobile Phone',units:24,sales:444000,exp:86188},
+{m:'Feb 2026',sp:'Amit Singh',dept:'Retail',cat:'Home Decor',prod:'Floor Lamp',units:13,sales:12350,exp:1948},
+{m:'Feb 2026',sp:'Sunita Patel',dept:'Retail',cat:'Home Decor',prod:'Floor Lamp',units:37,sales:35150,exp:8635},
+{m:'Feb 2026',sp:'Priya Sharma',dept:'Sales',cat:'Electronics',prod:'Mobile Phone',units:73,sales:1350500,exp:287159},
+{m:'Feb 2026',sp:'Rahul Gupta',dept:'Sales',cat:'Groceries',prod:'Rice 5kg',units:42,sales:15960,exp:2637},
+{m:'Feb 2026',sp:'Shweta Singh',dept:'Retail',cat:'Home Decor',prod:'Bedsheet Set',units:38,sales:53162,exp:13066},
+{m:'Feb 2026',sp:'Ravi Shankar',dept:'Sales',cat:'Clothing',prod:'Jacket',units:18,sales:59382,exp:13692},
+{m:'Feb 2026',sp:'Kavita Joshi',dept:'Retail',cat:'Groceries',prod:'Flour 10kg',units:30,sales:13800,exp:1696},
+{m:'Feb 2026',sp:'Deepak Mishra',dept:'Sales',cat:'Clothing',prod:'Jacket',units:72,sales:237528,exp:56478},
+{m:'Feb 2026',sp:'Rajesh Kumar',dept:'Sales',cat:'Groceries',prod:'Spices Pack',units:7,sales:980,exp:114},
+{m:'Feb 2026',sp:'Sanjay Tiwari',dept:'Sales',cat:'Groceries',prod:'Cooking Oil',units:35,sales:6825,exp:742},
+{m:'Mar 2026',sp:'Manoj Kumar',dept:'Sales',cat:'Clothing',prod:'Jacket',units:30,sales:98970,exp:20481},
+{m:'Mar 2026',sp:'Ravi Shankar',dept:'Sales',cat:'Home Decor',prod:'Wall Clock',units:61,sales:45750,exp:10749},
+{m:'Mar 2026',sp:'Pooja Yadav',dept:'Retail',cat:'Home Decor',prod:'Bedsheet Set',units:36,sales:50364,exp:6734},
+{m:'Mar 2026',sp:'Sunita Patel',dept:'Retail',cat:'Groceries',prod:'Rice 5kg',units:80,sales:30400,exp:5566},
+{m:'Mar 2026',sp:'Vijay Mehta',dept:'Sales',cat:'Clothing',prod:'T-Shirt',units:14,sales:6986,exp:1440},
+{m:'Mar 2026',sp:'Amit Singh',dept:'Retail',cat:'Electronics',prod:'Laptop',units:13,sales:676000,exp:159410},
+{m:'Mar 2026',sp:'Rajesh Kumar',dept:'Sales',cat:'Groceries',prod:'Rice 5kg',units:70,sales:26600,exp:3610},
+{m:'Mar 2026',sp:'Neha Verma',dept:'Retail',cat:'Home Decor',prod:'Curtains',units:74,sales:147926,exp:17728},
+{m:'Mar 2026',sp:'Rahul Gupta',dept:'Sales',cat:'Home Decor',prod:'Curtains',units:65,sales:129935,exp:28732},
+{m:'Mar 2026',sp:'Kavita Joshi',dept:'Retail',cat:'Clothing',prod:'T-Shirt',units:17,sales:8483,exp:1687},
+{m:'Mar 2026',sp:'Priya Sharma',dept:'Sales',cat:'Groceries',prod:'Spices Pack',units:57,sales:7980,exp:1357},
+{m:'Mar 2026',sp:'Deepak Mishra',dept:'Sales',cat:'Electronics',prod:'Mobile Phone',units:12,sales:222000,exp:35607},
+{m:'Mar 2026',sp:'Anita Roy',dept:'Retail',cat:'Groceries',prod:'Rice 5kg',units:36,sales:13680,exp:1761},
+{m:'Mar 2026',sp:'Shweta Singh',dept:'Retail',cat:'Home Decor',prod:'Curtains',units:59,sales:117941,exp:15040},
+{m:'Mar 2026',sp:'Sanjay Tiwari',dept:'Sales',cat:'Home Decor',prod:'Curtains',units:14,sales:27986,exp:4659},
+{m:'Apr 2026',sp:'Kavita Joshi',dept:'Retail',cat:'Clothing',prod:'Kurta',units:12,sales:11988,exp:1495},
+{m:'Apr 2026',sp:'Pooja Yadav',dept:'Retail',cat:'Electronics',prod:'Smart TV',units:38,sales:1444000,exp:345084},
+{m:'Apr 2026',sp:'Vijay Mehta',dept:'Sales',cat:'Home Decor',prod:'Wall Clock',units:59,sales:44250,exp:9049},
+{m:'Apr 2026',sp:'Sunita Patel',dept:'Retail',cat:'Home Decor',prod:'Curtains',units:29,sales:57971,exp:8377},
+{m:'Apr 2026',sp:'Amit Singh',dept:'Retail',cat:'Electronics',prod:'Headphones',units:74,sales:310800,exp:33922},
+{m:'Apr 2026',sp:'Neha Verma',dept:'Retail',cat:'Groceries',prod:'Rice 5kg',units:11,sales:4180,exp:784},
+{m:'Apr 2026',sp:'Rajesh Kumar',dept:'Sales',cat:'Clothing',prod:'T-Shirt',units:70,sales:34930,exp:3913},
+{m:'Apr 2026',sp:'Deepak Mishra',dept:'Sales',cat:'Clothing',prod:'T-Shirt',units:13,sales:6487,exp:1306},
+{m:'Apr 2026',sp:'Priya Sharma',dept:'Sales',cat:'Clothing',prod:'Kurta',units:20,sales:19980,exp:4820},
+{m:'Apr 2026',sp:'Anita Roy',dept:'Retail',cat:'Clothing',prod:'Jacket',units:10,sales:32990,exp:6364},
+{m:'Apr 2026',sp:'Manoj Kumar',dept:'Sales',cat:'Home Decor',prod:'Floor Lamp',units:77,sales:73150,exp:13051},
+{m:'Apr 2026',sp:'Ravi Shankar',dept:'Sales',cat:'Groceries',prod:'Dal 2kg',units:45,sales:13950,exp:1894},
+{m:'Apr 2026',sp:'Rahul Gupta',dept:'Sales',cat:'Home Decor',prod:'Curtains',units:43,sales:85957,exp:14491},
+{m:'Apr 2026',sp:'Sanjay Tiwari',dept:'Sales',cat:'Electronics',prod:'Mobile Phone',units:63,sales:1165500,exp:225144},
+{m:'Apr 2026',sp:'Shweta Singh',dept:'Retail',cat:'Electronics',prod:'Mobile Phone',units:73,sales:1350500,exp:178230},
+{m:'May 2026',sp:'Rajesh Kumar',dept:'Sales',cat:'Electronics',prod:'Laptop',units:38,sales:1976000,exp:231813},
+{m:'May 2026',sp:'Ravi Shankar',dept:'Sales',cat:'Electronics',prod:'Headphones',units:24,sales:100800,exp:14198},
+{m:'May 2026',sp:'Anita Roy',dept:'Retail',cat:'Clothing',prod:'Saree',units:31,sales:86769,exp:17625},
+{m:'May 2026',sp:'Kavita Joshi',dept:'Retail',cat:'Groceries',prod:'Flour 10kg',units:67,sales:30820,exp:4243},
+{m:'May 2026',sp:'Deepak Mishra',dept:'Sales',cat:'Electronics',prod:'Mobile Phone',units:59,sales:1091500,exp:244935},
+{m:'May 2026',sp:'Priya Sharma',dept:'Sales',cat:'Electronics',prod:'Mobile Phone',units:47,sales:869500,exp:187523},
+{m:'May 2026',sp:'Manoj Kumar',dept:'Sales',cat:'Groceries',prod:'Dal 2kg',units:61,sales:18910,exp:3456},
+{m:'May 2026',sp:'Sanjay Tiwari',dept:'Sales',cat:'Home Decor',prod:'Floor Lamp',units:6,sales:5700,exp:666},
+{m:'May 2026',sp:'Shweta Singh',dept:'Retail',cat:'Clothing',prod:'Jacket',units:9,sales:29691,exp:6686},
+{m:'May 2026',sp:'Rahul Gupta',dept:'Sales',cat:'Clothing',prod:'Kurta',units:21,sales:20979,exp:2230},
+{m:'May 2026',sp:'Sunita Patel',dept:'Retail',cat:'Groceries',prod:'Rice 5kg',units:50,sales:19000,exp:2499},
+{m:'May 2026',sp:'Pooja Yadav',dept:'Retail',cat:'Clothing',prod:'T-Shirt',units:50,sales:24950,exp:5415},
+{m:'May 2026',sp:'Neha Verma',dept:'Retail',cat:'Home Decor',prod:'Floor Lamp',units:24,sales:22800,exp:5446},
+{m:'May 2026',sp:'Vijay Mehta',dept:'Sales',cat:'Clothing',prod:'Jeans',units:27,sales:37773,exp:8771},
+{m:'May 2026',sp:'Amit Singh',dept:'Retail',cat:'Electronics',prod:'Laptop',units:47,sales:2444000,exp:531223},
+{m:'Jun 2026',sp:'Shweta Singh',dept:'Retail',cat:'Groceries',prod:'Cooking Oil',units:34,sales:6630,exp:885},
+{m:'Jun 2026',sp:'Rahul Gupta',dept:'Sales',cat:'Clothing',prod:'Kurta',units:47,sales:46953,exp:6657},
+{m:'Jun 2026',sp:'Priya Sharma',dept:'Sales',cat:'Electronics',prod:'Tablet',units:49,sales:1372000,exp:269217},
+{m:'Jun 2026',sp:'Sanjay Tiwari',dept:'Sales',cat:'Home Decor',prod:'Floor Lamp',units:47,sales:44650,exp:10756},
+{m:'Jun 2026',sp:'Amit Singh',dept:'Retail',cat:'Electronics',prod:'Tablet',units:27,sales:756000,exp:141439},
+{m:'Jun 2026',sp:'Rajesh Kumar',dept:'Sales',cat:'Groceries',prod:'Rice 5kg',units:18,sales:6840,exp:1296},
+{m:'Jun 2026',sp:'Vijay Mehta',dept:'Sales',cat:'Groceries',prod:'Cooking Oil',units:60,sales:11700,exp:2234},
+{m:'Jun 2026',sp:'Ravi Shankar',dept:'Sales',cat:'Electronics',prod:'Smart TV',units:78,sales:2964000,exp:380909},
+{m:'Jun 2026',sp:'Anita Roy',dept:'Retail',cat:'Electronics',prod:'Smart TV',units:5,sales:190000,exp:33818},
+{m:'Jun 2026',sp:'Deepak Mishra',dept:'Sales',cat:'Clothing',prod:'Saree',units:60,sales:167940,exp:18557},
+{m:'Jun 2026',sp:'Kavita Joshi',dept:'Retail',cat:'Groceries',prod:'Flour 10kg',units:45,sales:20700,exp:4130},
+{m:'Jun 2026',sp:'Pooja Yadav',dept:'Retail',cat:'Electronics',prod:'Tablet',units:69,sales:1932000,exp:282831},
+{m:'Jun 2026',sp:'Sunita Patel',dept:'Retail',cat:'Home Decor',prod:'Wall Clock',units:56,sales:42000,exp:8592},
+{m:'Jun 2026',sp:'Neha Verma',dept:'Retail',cat:'Clothing',prod:'Jeans',units:58,sales:81142,exp:16207},
+{m:'Jun 2026',sp:'Manoj Kumar',dept:'Sales',cat:'Home Decor',prod:'Curtains',units:77,sales:153923,exp:22341},
+];
+RAW.forEach(r=>r.profit=r.sales-r.exp);
+
+const MONTHS=['Jan 2026','Feb 2026','Mar 2026','Apr 2026','May 2026','Jun 2026'];
+const CATS=['Electronics','Clothing','Home Decor','Groceries'];
+const CAT_COLORS=['#1a6ef7','#111111','#888888','#c0cfe8'];
+
+function fmt(n){return'₹'+Math.round(n).toLocaleString('en-IN')}
+function fmtK(n){if(n>=10000000)return'₹'+(n/10000000).toFixed(1)+'Cr';if(n>=100000)return'₹'+(n/100000).toFixed(1)+'L';return fmt(n)}
+function pct(a,b){return b?Math.round(a/b*100)+'%':'—'}
+function sum(arr,k){return arr.reduce((a,r)=>a+r[k],0)}
+
+let charts={};
+function destroyChart(id){if(charts[id]){charts[id].destroy();delete charts[id]}}
+
+function getFiltered(){
+  const m=document.getElementById('f-month').value;
+  const c=document.getElementById('f-cat').value;
+  const d=document.getElementById('f-dept').value;
+  const s=document.getElementById('f-sp').value;
+  return RAW.filter(r=>(!m||r.m===m)&&(!c||r.cat===c)&&(!d||r.dept===d)&&(!s||r.sp===s));
+}
+
+function applyFilters(){
+  const data=getFiltered();
+  document.getElementById('rec-count').textContent=data.length;
+  const totS=sum(data,'sales'),totP=sum(data,'profit'),totE=sum(data,'exp'),totU=sum(data,'units');
+  document.getElementById('kpi-rev').textContent=fmtK(totS);
+  document.getElementById('kpi-rev-s').textContent=data.length+' transactions';
+  document.getElementById('kpi-profit').textContent=fmtK(totP);
+  document.getElementById('kpi-pm').textContent='Margin: '+pct(totP,totS);
+  document.getElementById('kpi-exp').textContent=fmtK(totE);
+  document.getElementById('kpi-exp-s').textContent=pct(totE,totS)+' of revenue';
+  document.getElementById('kpi-units').textContent=totU.toLocaleString('en-IN');
+  document.getElementById('kpi-units-s').textContent='units';
+  document.getElementById('kpi-tx').textContent=data.length;
+  document.getElementById('kpi-tx-s').textContent='records';
+  renderMonthly(data);renderCat(data);renderSP(data);renderMargin(data);renderDept(data);renderTable(data);
+}
+
+function renderMonthly(data){
+  destroyChart('monthly');
+  const rev=[],exp=[],pro=[];
+  MONTHS.forEach(m=>{const r=data.filter(x=>x.m===m);rev.push(Math.round(sum(r,'sales')));exp.push(Math.round(sum(r,'exp')));pro.push(Math.round(sum(r,'profit')));});
+  charts.monthly=new Chart(document.getElementById('c-monthly').getContext('2d'),{
+    type:'bar',
+    data:{labels:MONTHS.map(m=>m.replace(' 2026','')),datasets:[
+      {label:'Revenue',data:rev,backgroundColor:'#1a6ef7',borderRadius:3,barPercentage:.75},
+      {label:'Expenses',data:exp,backgroundColor:'#d0d0d0',borderRadius:3,barPercentage:.75},
+      {label:'Profit',data:pro,backgroundColor:'#111',borderRadius:3,barPercentage:.75},
+    ]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>' '+fmtK(c.raw)}}},
+      scales:{x:{ticks:{color:'#aaa',font:{size:11}},grid:{display:false}},y:{ticks:{color:'#bbb',font:{size:10},callback:v=>fmtK(v)},grid:{color:'#f0f0f0'}}}}
+  });
+}
+
+function renderCat(data){
+  destroyChart('cat');
+  const vals=CATS.map(c=>Math.round(sum(data.filter(r=>r.cat===c),'sales')));
+  const total=vals.reduce((a,b)=>a+b,0);
+  document.getElementById('leg-cat').innerHTML=CATS.map((c,i)=>`<span class="legend-item"><span class="legend-dot" style="background:${CAT_COLORS[i]}"></span>${c} ${total?Math.round(vals[i]/total*100)+'%':''}</span>`).join('');
+  charts.cat=new Chart(document.getElementById('c-cat').getContext('2d'),{
+    type:'doughnut',
+    data:{labels:CATS,datasets:[{data:vals,backgroundColor:CAT_COLORS,borderWidth:3,borderColor:'#fff'}]},
+    options:{responsive:true,maintainAspectRatio:false,cutout:'65%',plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>c.label+': '+fmtK(c.raw)}}}}
+  });
+}
+
+function renderSP(data){
+  destroyChart('sp');
+  const spMap={};
+  data.forEach(r=>{spMap[r.sp]=(spMap[r.sp]||0)+r.sales;});
+  const sorted=Object.entries(spMap).sort((a,b)=>b[1]-a[1]).slice(0,10);
+  const h=Math.max(200,(sorted.length*38)+70);
+  document.querySelector('#c-sp').parentElement.style.height=h+'px';
+  charts.sp=new Chart(document.getElementById('c-sp').getContext('2d'),{
+    type:'bar',
+    data:{labels:sorted.map(s=>s[0].split(' ')[0]),datasets:[{data:sorted.map(s=>Math.round(s[1])),backgroundColor:sorted.map((_,i)=>i===0?'#1a6ef7':'#e0e0e0'),borderRadius:3,barPercentage:.65}]},
+    options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>' '+fmtK(c.raw)}}},
+      scales:{x:{ticks:{color:'#bbb',font:{size:10},callback:v=>fmtK(v)},grid:{color:'#f0f0f0'}},y:{ticks:{color:'#555',font:{size:11}},grid:{display:false}}}}
+  });
+}
+
+function renderMargin(data){
+  destroyChart('margin');
+  const margins=CATS.map(c=>{const r=data.filter(x=>x.cat===c);const s=sum(r,'sales'),p=sum(r,'profit');return s?Math.round(p/s*100):0;});
+  charts.margin=new Chart(document.getElementById('c-margin').getContext('2d'),{
+    type:'bar',
+    data:{labels:CATS,datasets:[{data:margins,backgroundColor:margins.map(v=>v===Math.max(...margins)?'#1a6ef7':'#e0e0e0'),borderRadius:3,barPercentage:.55}]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>c.raw+'%'}}},
+      scales:{x:{ticks:{color:'#aaa',font:{size:11}},grid:{display:false}},y:{ticks:{color:'#bbb',font:{size:10},callback:v=>v+'%'},grid:{color:'#f0f0f0'},min:0,max:100}}}
+  });
+}
+
+function renderDept(data){
+  destroyChart('dept');
+  const s=MONTHS.map(m=>Math.round(sum(data.filter(r=>r.m===m&&r.dept==='Sales'),'sales')));
+  const r=MONTHS.map(m=>Math.round(sum(data.filter(x=>x.m===m&&x.dept==='Retail'),'sales')));
+  charts.dept=new Chart(document.getElementById('c-dept').getContext('2d'),{
+    type:'bar',
+    data:{labels:MONTHS.map(m=>m.replace(' 2026','')),datasets:[
+      {label:'Sales',data:s,backgroundColor:'#1a6ef7',borderRadius:3,stack:'s'},
+      {label:'Retail',data:r,backgroundColor:'#c0cfe8',borderRadius:3,stack:'s'},
+    ]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>' '+c.dataset.label+': '+fmtK(c.raw)}}},
+      scales:{x:{ticks:{color:'#aaa',font:{size:11}},grid:{display:false},stacked:true},y:{ticks:{color:'#bbb',font:{size:10},callback:v=>fmtK(v)},grid:{color:'#f0f0f0'},stacked:true}}}
+  });
+}
+
+function renderTable(data){
+  const tbody=document.getElementById('tbl-body');
+  const empty=document.getElementById('tbl-empty');
+  if(!data.length){tbody.innerHTML='';empty.style.display='block';return;}
+  empty.style.display='none';
+  const sorted=[...data].sort((a,b)=>MONTHS.indexOf(a.m)-MONTHS.indexOf(b.m));
+  tbody.innerHTML=sorted.map(r=>`<tr>
+    <td style="color:#999">${r.m.replace(' 2026','')}</td>
+    <td>${r.sp}</td>
+    <td><span class="badge ${r.dept==='Sales'?'badge-s':'badge-r'}">${r.dept}</span></td>
+    <td>${r.cat}</td><td style="color:#999">${r.prod}</td>
+    <td style="text-align:right;color:#999">${r.units}</td>
+    <td style="text-align:right;font-weight:500">${fmt(r.sales)}</td>
+    <td style="text-align:right">${fmt(r.profit)}</td>
+    <td style="text-align:right;color:${r.profit/r.sales>.2?'#1a6ef7':'#aaa'}">${pct(r.profit,r.sales)}</td>
+  </tr>`).join('');
+}
+
+function resetFilters(){
+  ['f-month','f-cat','f-dept','f-sp'].forEach(id=>document.getElementById(id).value='');
+  applyFilters();
+}
+
+const spSel=document.getElementById('f-sp');
+[...new Set(RAW.map(r=>r.sp))].sort().forEach(s=>{const o=document.createElement('option');o.textContent=s;spSel.appendChild(o);});
+
+applyFilters();
+</script>
